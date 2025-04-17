@@ -4,6 +4,7 @@ import {
   Apply,
   args,
   Call,
+  ComposeLeft,
   Fn,
   PartialApply,
   Pipe,
@@ -11,6 +12,7 @@ import {
   _,
 } from "../core/Core";
 import { Iterator, Prettify, Stringifiable } from "../helpers";
+import { Booleans } from "../booleans/Booleans";
 import { Objects } from "../objects/Objects";
 import * as NumberImpls from "../numbers/impl/numbers";
 import { Std } from "../std/Std";
@@ -375,6 +377,43 @@ export namespace Tuples {
   export interface FindFn extends Fn {
     return: FindImpl<this["arg1"], Extract<this["arg0"], Fn>>;
   }
+
+  type IndexOfImpl<target, tuple extends readonly unknown[]> = Call<
+    At<0>,
+    Call<
+      At<0>,
+      Call<
+        Filter<
+          ComposeLeft<[At<1>, Booleans.Equals<target>]>
+        >,
+        Call<
+          Zip,
+          Call<Range<0>, Call<Length, tuple>>,
+          tuple
+        >
+      >
+    >
+  >;
+  
+  interface IndexOfFn extends Fn {
+    return: IndexOfImpl<this["arg0"], this["arg1"]>;
+  }
+  
+  /**
+   * Returns the index of the first occurrence of a target value in a tuple.
+   * @param target - The target value to find.
+   * @param tuple - The tuple to search.
+   * @returns The index of the first occurrence of the value in the tuple.
+   * @example
+   * ```ts
+   * type a = Call<T.IndexOf<2, [1, 2, 3]>> // 1
+   * type b = Call<T.IndexOf<4, [1, 2, 3]>> // never
+   * ```
+   */
+  export type IndexOf<
+    target = unset,
+    tuple extends readonly unknown[] | unset = unset,
+  > = PartialApply<TupleIndexOfFn, [target, tuple]>;
 
   /**
    * Sum the elements of a tuple of numbers.
